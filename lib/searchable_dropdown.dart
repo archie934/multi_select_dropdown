@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:searchable_dropdown/components/dropdown_body.dart';
 
 import 'package:searchable_dropdown/components/dropdown_header.dart';
+import 'package:searchable_dropdown/models/dropdown_body_info.dart';
 import 'package:searchable_dropdown/models/dropdown_option.dart';
+
+import 'components/dropdown_menu_button.dart';
 
 class SearchableDropdown<T> extends StatefulWidget {
   final List<DropdownOption<T>> options;
@@ -23,14 +29,16 @@ class SearchableDropdown<T> extends StatefulWidget {
   State<StatefulWidget> createState() => SearchableDropdownState();
 }
 
-class SearchableDropdownState<T>
-    extends State<SearchableDropdown<T>> {
+class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
   late final OverlayPortalController _popupController;
   late final Map<int, DropdownOption<T>> _options;
+  late final TextEditingController _searchController;
+  Timer? _debounceSearch;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     _options = {
       for (var value in widget.initialValues) value.value.hashCode: value
     };
@@ -43,6 +51,12 @@ class SearchableDropdownState<T>
       for (var value in widget.initialValues) value.value.hashCode: value
     };
     super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   (Offset offset, double width, double popupHeight) _getGlobalPosition(
@@ -69,49 +83,51 @@ class SearchableDropdownState<T>
     );
   }
 
+  List<Widget> _getOptions(String searchString) {
+    return widget.options
+        .where(
+          (option) => option.value.toString().toLowerCase().contains(
+                searchString,
+              ),
+        )
+        .map((option) => DropdownMenuButton(
+              isSelected: _options.containsKey(option.value.hashCode),
+              onTap: () {
+                _options.putIfAbsent(option.value.hashCode, () => option);
+                _popupController.hide();
+                setState(() {});
+              },
+              child: option.labelBuilder(option.value),
+            ))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: _popupController.toggle,
-      child: DefaultTextStyle(
-        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 24),
-        child: OverlayPortal(
-          controller: _popupController,
-          overlayChildBuilder: (_) {
-            final (offset, width, popupHeight) = _getGlobalPosition(context);
+    return OverlayPortal(
+      controller: _popupController,
+      overlayChildBuilder: (_) {
+        final (offset, width, popupHeight) = _getGlobalPosition(context);
 
-            return Positioned(
-              top: offset.dy,
-              left: offset.dx,
-              child: Container(
-                width: width,
-                height: popupHeight,
-                color: Colors.amber,
-                child: CustomScrollView(
-                  slivers: [
-                    SliverFixedExtentList(
-                      itemExtent: 40,
-                      delegate: SliverChildListDelegate(widget.options
-                          .map((option) => InkResponse(
-                                onTap: () {
-                                  _options.putIfAbsent(
-                                      option.value.hashCode, () => option);
-                                  _popupController.hide();
-                                  setState(() {});
-                                },
-                                child: option.labelBuilder(option.value),
-                              ))
-                          .toList()),
-                    )
-                  ],
-                ),
-              ),
-            );
-          },
-          child: DropdownHeader<T>(
-            options: _options.values.toList(),
-          ),
-        ),
+        return ValueListenableBuilder(
+            valueListenable: _searchController,
+            builder: (_, textEditingValue, ___) {
+              final options = _getOptions(textEditingValue.text);
+
+              return DropdownBody(
+                  dropdownBodyInfo: DropdownBodyInfo(
+                    offset: offset,
+                    width: width,
+                    height: popupHeight,
+                    itemExtent: widget.itemExtent,
+                  ),
+                  options: options);
+            });
+      },
+      child: DropdownHeader<T>(
+        selectedOptions: _options.values.toList(),
+        onTap: _popupController.toggle,
+        searchController: _searchController,
       ),
     );
   }

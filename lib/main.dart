@@ -14,52 +14,59 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         body: Center(
-          child: SearchableDropdown<String>(
-            options: [
-              DropdownOption<String>(
-                value: 'ASDFS',
-                labelBuilder: (value) => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.abc_rounded),
-                    Text(value),
-                  ],
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width / 3,
+            child: SearchableDropdown<String>(
+              options: [
+                DropdownOption(
+                  value: 'ASDFS',
+                  labelBuilder: (value) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.abc_rounded),
+                      Text(value),
+                    ],
+                  ),
                 ),
-              ),
-              DropdownOption<String>(
-                value: 'Some',
-                labelBuilder: (value) => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.abc_rounded),
-                    Text(value),
-                  ],
+                DropdownOption(
+                  value: 'Some',
+                  labelBuilder: (value) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.abc_rounded),
+                      Text(value),
+                    ],
+                  ),
                 ),
-              ),
-              DropdownOption<String>(
-                value: 'AAAA',
-                labelBuilder: (value) => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.abc_rounded),
-                    Text(value),
-                  ],
-                ),
-              )
-            ],
-            initialValues: [
-              DropdownOption<String>(
-                value: 'Some',
-                labelBuilder: (value) => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.abc_rounded),
-                    Text(value),
-                  ],
-                ),
-              )
-            ],
-            onChanged: (List<DropdownOption<Object?>> selectedOption) {},
+                DropdownOption(
+                  value: 'AAAA',
+                  labelBuilder: (value) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.abc_rounded),
+                      Text(value),
+                    ],
+                  ),
+                )
+              ],
+              initialValues: [
+                DropdownOption<String>(
+                  value: 'Some',
+                  labelBuilder: (value) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.abc_rounded),
+                      Text(value),
+                    ],
+                  ),
+                )
+              ],
+              onChanged: (List<DropdownOption<Object?>> selectedOption) {},
+            ),
           ),
         ),
       ),
