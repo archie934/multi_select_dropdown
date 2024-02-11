@@ -20,7 +20,7 @@ class MainApp extends StatelessWidget {
               options: [
                 DropdownOption(
                   value: 'ASDFS',
-                  labelBuilder: (value) => Row(
+                  optionBuilder: (value) => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -31,7 +31,7 @@ class MainApp extends StatelessWidget {
                 ),
                 DropdownOption(
                   value: 'Some',
-                  labelBuilder: (value) => Row(
+                  optionBuilder: (value) => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -42,7 +42,7 @@ class MainApp extends StatelessWidget {
                 ),
                 DropdownOption(
                   value: 'AAAA',
-                  labelBuilder: (value) => Row(
+                  optionBuilder: (value) => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -55,7 +55,7 @@ class MainApp extends StatelessWidget {
               initialValues: [
                 DropdownOption<String>(
                   value: 'Some',
-                  labelBuilder: (value) => Row(
+                  optionBuilder: (value) => Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [

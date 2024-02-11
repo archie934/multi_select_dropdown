@@ -1,36 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:searchable_dropdown/models/dropdown_option.dart';
 
-class DropdownHeader<T> extends StatefulWidget {
-  final List<DropdownOption<T>> selectedOptions;
+class DropdownHeader<T> extends StatelessWidget {
+  final List<Widget> selectedOptions;
   final VoidCallback onTap;
   final TextEditingController searchController;
+  final FocusNode focusNode;
 
   const DropdownHeader({
     super.key,
     required this.selectedOptions,
     required this.onTap,
     required this.searchController,
+    required this.focusNode,
   });
-
-  @override
-  State<DropdownHeader<T>> createState() => _DropdownHeaderState<T>();
-}
-
-class _DropdownHeaderState<T> extends State<DropdownHeader<T>> {
-  late final FocusNode _searchFocus;
-
-  @override
-  void initState() {
-    _searchFocus = FocusNode();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _searchFocus.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +20,9 @@ class _DropdownHeaderState<T> extends State<DropdownHeader<T>> {
       containedInkWell: true,
       radius: 0.1,
       onTap: () {
-        widget.onTap();
-        if (!_searchFocus.hasFocus) {
-          _searchFocus.requestFocus();
+        onTap();
+        if (!focusNode.hasFocus) {
+          focusNode.requestFocus();
         }
       },
       child: Container(
@@ -50,12 +32,10 @@ class _DropdownHeaderState<T> extends State<DropdownHeader<T>> {
         child: Wrap(
           direction: Axis.horizontal,
           crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            ...widget.selectedOptions
-                .map((option) => option.labelBuilder(option.value)),
-            TextField(
-              controller: widget.searchController,
-              focusNode: _searchFocus,
+          children: selectedOptions
+            ..add(TextField(
+              controller: searchController,
+              focusNode: focusNode,
               decoration: InputDecoration(
                   contentPadding: EdgeInsets.zero.copyWith(left: 16),
                   constraints:
@@ -65,8 +45,7 @@ class _DropdownHeaderState<T> extends State<DropdownHeader<T>> {
                   border: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   isDense: true),
-            )
-          ],
+            )),
         ),
       ),
     );

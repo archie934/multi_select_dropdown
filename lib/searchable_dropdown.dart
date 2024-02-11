@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:searchable_dropdown/components/dropdown_body.dart';
 
@@ -9,10 +7,14 @@ import 'package:searchable_dropdown/models/dropdown_option.dart';
 
 import 'components/dropdown_menu_button.dart';
 
+typedef HeaderItemBuilder<T> = Widget Function(
+    DropdownOption<T> option, void Function(DropdownOption<T> option) onRemove);
+
 class SearchableDropdown<T> extends StatefulWidget {
   final List<DropdownOption<T>> options;
   final List<DropdownOption<T>> initialValues;
   final void Function(List<DropdownOption<T>> selectedOption) onChanged;
+  final HeaderItemBuilder<T>? headerItemBuilder;
   final double itemExtent;
   final double? popupHeight;
 
@@ -23,6 +25,7 @@ class SearchableDropdown<T> extends StatefulWidget {
     required this.onChanged,
     this.popupHeight,
     this.itemExtent = 40,
+    this.headerItemBuilder,
   }) : super(key: key);
 
   @override
@@ -33,30 +36,60 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
   late final OverlayPortalController _popupController;
   late final Map<int, DropdownOption<T>> _options;
   late final TextEditingController _searchController;
-  Timer? _debounceSearch;
+  late final FocusNode _searchFocus;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _options = {
-      for (var value in widget.initialValues) value.value.hashCode: value
+      for (var option in widget.initialValues) option.value.hashCode: option
     };
     _popupController = OverlayPortalController();
+    _searchFocus = FocusNode();
+    _searchController.addListener(onType);
   }
 
   @override
   void didUpdateWidget(SearchableDropdown<T> oldWidget) {
     _options = {
-      for (var value in widget.initialValues) value.value.hashCode: value
+      for (var option in widget.initialValues) option.value.hashCode: option
     };
     super.didUpdateWidget(oldWidget);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(onType);
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
+  }
+
+  void onType() {
+    if (!_popupController.isShowing) {
+      _popupController.show();
+    }
+  }
+
+  Widget _defaultHeaderBuilder(
+    DropdownOption<T> option,
+    void Function(DropdownOption<T> option) onRemove,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        option.optionBuilder(option.value),
+        IconButton(
+            onPressed: () => onRemove(option),
+            icon: const Icon(Icons.cancel_outlined))
+      ],
+    );
+  }
+
+  void onRemove(DropdownOption<T> option) {
+    this._options.remove(option.value.hashCode);
+    setState(() {});
   }
 
   (Offset offset, double width, double popupHeight) _getGlobalPosition(
@@ -93,11 +126,14 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
         .map((option) => DropdownMenuButton(
               isSelected: _options.containsKey(option.value.hashCode),
               onTap: () {
-                _options.putIfAbsent(option.value.hashCode, () => option);
+                _options.putIfAbsent(option.value.hashCode, () {
+                  _searchController.clear();
+                  return option;
+                });
                 _popupController.hide();
                 setState(() {});
               },
-              child: option.labelBuilder(option.value),
+              child: option.optionBuilder(option.value),
             ))
         .toList();
   }
@@ -125,7 +161,12 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
             });
       },
       child: DropdownHeader<T>(
-        selectedOptions: _options.values.toList(),
+        focusNode: _searchFocus,
+        selectedOptions: _options.values
+            .map((option) =>
+                widget.headerItemBuilder?.call(option, onRemove) ??
+                _defaultHeaderBuilder(option, onRemove))
+            .toList(),
         onTap: _popupController.toggle,
         searchController: _searchController,
       ),
