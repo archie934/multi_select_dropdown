@@ -1,23 +1,25 @@
 import 'package:flutter/widgets.dart';
+import 'package:searchable_dropdown/models/dropdown_menu_button_options.dart';
 
-typedef OptionBuilder = Widget Function(dynamic value);
+typedef OptionBuilder<T> = Widget Function(T value);
 
 @immutable
 class DropdownOption<T> {
-  final OptionBuilder optionBuilder;
+  //Option shown in the header
+  final OptionBuilder<dynamic> labelBuilder;
+  //Option shown in the dropdown menu
+  final OptionBuilder<DropdownMenuButtonOptions>? menuItemBuilder;
   final T value;
 
-  const DropdownOption({
-    required this.value,
-    required this.optionBuilder,
-  });
+  const DropdownOption(
+      {required this.value, required this.labelBuilder, this.menuItemBuilder});
 
   DropdownOption<T> copyWith({
     OptionBuilder? optionBuilder,
     T? value,
   }) {
     return DropdownOption<T>(
-      optionBuilder: optionBuilder ?? this.optionBuilder,
+      labelBuilder: optionBuilder ?? this.labelBuilder,
       value: value ?? this.value,
     );
   }

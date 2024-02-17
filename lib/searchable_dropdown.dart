@@ -4,15 +4,18 @@ import 'package:searchable_dropdown/components/dropdown_body.dart';
 import 'package:searchable_dropdown/components/dropdown_header.dart';
 import 'package:searchable_dropdown/models/dropdown_body_box.dart';
 import 'package:searchable_dropdown/models/dropdown_header_options.dart';
+import 'package:searchable_dropdown/models/dropdown_menu_button_options.dart';
 import 'package:searchable_dropdown/models/dropdown_option.dart';
+import 'package:searchable_dropdown/models/dropdown_scroll_notification.dart';
 
 import 'components/dropdown_menu_button.dart';
 
 const defaultHeaderOptions = DrodownHeaderOptions(
-    isSearchable: true,
-    runSpacing: 8.0,
-    spacing: 8.0,
-    inputDecoration: InputDecoration(enabled: true));
+  isSearchable: true,
+  runSpacing: 8.0,
+  spacing: 8.0,
+  inputDecoration: InputDecoration(),
+);
 
 const defaultItemExtent = 40.0;
 
@@ -95,6 +98,10 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
   }
 
   void onScrollNotification(ScrollNotification notification) {
+    if (notification is DropdownScrollNotification) {
+      return;
+    }
+
     if (notification is ScrollStartNotification && mounted) {
       if (_popupController.isShowing) {
         _popupController.hide();
@@ -102,14 +109,13 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
     }
   }
 
-  bool isPointerInsideMenu(BuildContext context, PointerDownEvent event) {
+  bool isPointerInsideMenu(BuildContext context, Offset globalPoint) {
     final (offset, width, popupHeight) = _getGlobalPosition(context);
-    final eventGlobalPosition = event.position;
 
-    return eventGlobalPosition.dx >= offset.dx &&
-        eventGlobalPosition.dx <= (offset.dx + width) &&
-        eventGlobalPosition.dy >= offset.dy &&
-        eventGlobalPosition.dy <= (offset.dy + popupHeight);
+    return globalPoint.dx >= offset.dx &&
+        globalPoint.dx <= (offset.dx + width) &&
+        globalPoint.dy >= offset.dy &&
+        globalPoint.dy <= (offset.dy + popupHeight);
   }
 
   void onType() {
@@ -123,7 +129,7 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
     void Function(DropdownOption<T> option) remove,
   ) {
     return InputChip(
-      label: option.optionBuilder(option.value),
+      label: option.labelBuilder(option.value),
       onDeleted: widget.drodownHeaderOptions.inputDecoration.enabled
           ? () => remove(option)
           : null,
@@ -168,7 +174,22 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
                     searchString,
                   ),
         )
-        .map((option) => DropdownMenuButton(
+        .map((option) =>
+            option.menuItemBuilder?.call(
+              DropdownMenuButtonOptions(
+                  isSelected: _options.containsKey(option.value.hashCode),
+                  onTap: () {
+                    {
+                      _options.putIfAbsent(option.value.hashCode, () {
+                        _searchController.clear();
+                        return option;
+                      });
+                      _popupController.hide();
+                      setState(() {});
+                    }
+                  }),
+            ) ??
+            DropdownMenuButton(
               isSelected: _options.containsKey(option.value.hashCode),
               onTap: () {
                 _options.putIfAbsent(option.value.hashCode, () {
@@ -178,7 +199,7 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
                 _popupController.hide();
                 setState(() {});
               },
-              child: option.optionBuilder.call(option.value),
+              child: option.labelBuilder.call(option.value),
             ))
         .toList();
   }
@@ -204,7 +225,7 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
               final options = _getOptions(textEditingValue.text);
 
               return DropdownBody(
-                dropdownBodyInfo: DropdownBodyBox(
+                dropdownBodyBox: DropdownBodyBox(
                   offset: offset,
                   width: width,
                   height: popupHeight,
@@ -218,7 +239,7 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
       child: TapRegion(
           onTapOutside: (event) {
             if (_popupController.isShowing &&
-                !isPointerInsideMenu(context, event)) {
+                !isPointerInsideMenu(context, event.position)) {
               _popupController.hide();
             }
           },

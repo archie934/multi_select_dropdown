@@ -22,45 +22,24 @@ class MainApp extends StatelessWidget {
                   (index) => Padding(
                         padding: EdgeInsets.all(16),
                         child: SearchableDropdown(
-                          options: [
-                            DropdownOption(
-                              value: 'ASDFS',
-                              optionBuilder: (value) => Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.abc_rounded),
-                                  Text(value),
-                                ],
-                              ),
-                            ),
-                            DropdownOption(
-                              value: 'Some',
-                              optionBuilder: (value) => Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.abc_rounded),
-                                  Text(value),
-                                ],
-                              ),
-                            ),
-                            DropdownOption(
-                              value: 'AAAA',
-                              optionBuilder: (value) => Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.abc_rounded),
-                                  Text(value),
-                                ],
-                              ),
-                            )
-                          ],
+                          options: List.generate(
+                              50,
+                              (index) => DropdownOption(
+                                    value: 'Option $index',
+                                    labelBuilder: (value) => Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.abc_rounded),
+                                        Text(value),
+                                      ],
+                                    ),
+                                  )),
                           initialValues: [
                             DropdownOption(
-                              value: 'Some',
-                              optionBuilder: (value) => Row(
+                              value: 'Option 1',
+                              labelBuilder: (value) => Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -71,7 +50,9 @@ class MainApp extends StatelessWidget {
                             )
                           ],
                           onChanged:
-                              (List<DropdownOption<String>> selectedOption) {},
+                              (List<DropdownOption<String>> selectedOption) {
+                            print(selectedOption.toString());
+                          },
                         ),
                       )),
             ),

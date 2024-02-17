@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class DropdownMenuButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isSelected;
@@ -16,10 +15,11 @@ class DropdownMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      radius: 0.1,
       onTap: onTap,
       child: Container(
-        color: isSelected ? Colors.pink.withOpacity(.3) : Colors.transparent,
+        color: isSelected
+            ? Theme.of(context).primaryColor.withOpacity(.2)
+            : Colors.transparent,
         child: child,
       ),
     );

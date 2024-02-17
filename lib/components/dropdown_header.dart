@@ -41,6 +41,7 @@ class DropdownHeader extends StatelessWidget {
         child: Wrap(
           direction: Axis.horizontal,
           spacing: spacing,
+          runSpacing: runSpacing,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: !isSearchable ? selectedOptions : selectedOptions
             ..add(
