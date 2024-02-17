@@ -16,56 +16,64 @@ class MainApp extends StatelessWidget {
         body: Center(
           child: SizedBox(
             width: MediaQuery.of(context).size.width / 3,
-            child: SearchableDropdown<String>(
-              options: [
-                DropdownOption(
-                  value: 'ASDFS',
-                  optionBuilder: (value) => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.abc_rounded),
-                      Text(value),
-                    ],
-                  ),
-                ),
-                DropdownOption(
-                  value: 'Some',
-                  optionBuilder: (value) => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.abc_rounded),
-                      Text(value),
-                    ],
-                  ),
-                ),
-                DropdownOption(
-                  value: 'AAAA',
-                  optionBuilder: (value) => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.abc_rounded),
-                      Text(value),
-                    ],
-                  ),
-                )
-              ],
-              initialValues: [
-                DropdownOption<String>(
-                  value: 'Some',
-                  optionBuilder: (value) => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.abc_rounded),
-                      Text(value),
-                    ],
-                  ),
-                )
-              ],
-              onChanged: (List<DropdownOption<Object?>> selectedOption) {},
+            child: ListView(
+              children: List.generate(
+                  50,
+                  (index) => Padding(
+                        padding: EdgeInsets.all(16),
+                        child: SearchableDropdown(
+                          options: [
+                            DropdownOption(
+                              value: 'ASDFS',
+                              optionBuilder: (value) => Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.abc_rounded),
+                                  Text(value),
+                                ],
+                              ),
+                            ),
+                            DropdownOption(
+                              value: 'Some',
+                              optionBuilder: (value) => Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.abc_rounded),
+                                  Text(value),
+                                ],
+                              ),
+                            ),
+                            DropdownOption(
+                              value: 'AAAA',
+                              optionBuilder: (value) => Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.abc_rounded),
+                                  Text(value),
+                                ],
+                              ),
+                            )
+                          ],
+                          initialValues: [
+                            DropdownOption(
+                              value: 'Some',
+                              optionBuilder: (value) => Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.abc_rounded),
+                                  Text(value),
+                                ],
+                              ),
+                            )
+                          ],
+                          onChanged:
+                              (List<DropdownOption<String>> selectedOption) {},
+                        ),
+                      )),
             ),
           ),
         ),

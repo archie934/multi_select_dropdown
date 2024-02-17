@@ -1,12 +1,24 @@
 import 'package:flutter/widgets.dart';
 
-class DropdownOption<T> {
-  //This will be of type T but dart wont let me have it like that
-  Widget Function(dynamic value) optionBuilder;
-  T value;
+typedef OptionBuilder = Widget Function(dynamic value);
 
-  DropdownOption({
+@immutable
+class DropdownOption<T> {
+  final OptionBuilder optionBuilder;
+  final T value;
+
+  const DropdownOption({
     required this.value,
     required this.optionBuilder,
   });
+
+  DropdownOption<T> copyWith({
+    OptionBuilder? optionBuilder,
+    T? value,
+  }) {
+    return DropdownOption<T>(
+      optionBuilder: optionBuilder ?? this.optionBuilder,
+      value: value ?? this.value,
+    );
+  }
 }

@@ -15,7 +15,7 @@ class DropdownMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkResponse(
+    return InkWell(
       radius: 0.1,
       onTap: onTap,
       child: Container(

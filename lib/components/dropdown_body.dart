@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:searchable_dropdown/models/dropdown_body_info.dart';
+import 'package:searchable_dropdown/models/dropdown_body_box.dart';
 
 class DropdownBody extends StatelessWidget {
-  final DropdownBodyInfo dropdownBodyInfo;
+  final DropdownBodyBox dropdownBodyInfo;
+  final FocusNode parentFocus;
   final List<Widget> options;
 
   const DropdownBody({
     super.key,
     required this.dropdownBodyInfo,
     required this.options,
+    required this.parentFocus,
   });
 
   @override
@@ -19,14 +21,17 @@ class DropdownBody extends StatelessWidget {
       child: SizedBox(
         width: dropdownBodyInfo.width,
         height: dropdownBodyInfo.height,
-        child: CustomScrollView(
-          slivers: [
-            SliverFixedExtentList(
-              itemExtent: dropdownBodyInfo.itemExtent,
-              delegate: SliverChildListDelegate(options),
-            )
-          ],
-        ),
+        child: FocusScope(
+            autofocus: true,
+            parentNode: parentFocus,
+            child: CustomScrollView(
+              slivers: [
+                SliverFixedExtentList(
+                  itemExtent: dropdownBodyInfo.itemExtent,
+                  delegate: SliverChildListDelegate(options),
+                )
+              ],
+            )),
       ),
     );
   }

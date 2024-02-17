@@ -2,20 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:searchable_dropdown/components/dropdown_body.dart';
 
 import 'package:searchable_dropdown/components/dropdown_header.dart';
-import 'package:searchable_dropdown/models/dropdown_body_info.dart';
+import 'package:searchable_dropdown/models/dropdown_body_box.dart';
+import 'package:searchable_dropdown/models/dropdown_header_options.dart';
 import 'package:searchable_dropdown/models/dropdown_option.dart';
 
 import 'components/dropdown_menu_button.dart';
 
+const defaultHeaderOptions = DrodownHeaderOptions(
+    isSearchable: true,
+    runSpacing: 8.0,
+    spacing: 8.0,
+    inputDecoration: InputDecoration(enabled: true));
+
+const defaultItemExtent = 40.0;
+
 typedef HeaderItemBuilder<T> = Widget Function(
-    DropdownOption<T> option, void Function(DropdownOption<T> option) onRemove);
+    DropdownOption<T> option, void Function(DropdownOption<T> option) remove);
 
 class SearchableDropdown<T> extends StatefulWidget {
   final List<DropdownOption<T>> options;
   final List<DropdownOption<T>> initialValues;
+  final DrodownHeaderOptions drodownHeaderOptions;
   final void Function(List<DropdownOption<T>> selectedOption) onChanged;
-  final HeaderItemBuilder<T>? headerItemBuilder;
+  final bool Function(DropdownOption<T> option, String searhString)?
+      searchFunction;
   final double itemExtent;
+
+  final HeaderItemBuilder<T>? headerItemBuilder;
   final double? popupHeight;
 
   const SearchableDropdown({
@@ -23,20 +36,32 @@ class SearchableDropdown<T> extends StatefulWidget {
     required this.options,
     required this.initialValues,
     required this.onChanged,
+    this.searchFunction,
     this.popupHeight,
-    this.itemExtent = 40,
+    this.itemExtent = defaultItemExtent,
     this.headerItemBuilder,
+    this.drodownHeaderOptions = defaultHeaderOptions,
   }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => SearchableDropdownState();
 }
 
-class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
+class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
+    with WidgetsBindingObserver {
   late final OverlayPortalController _popupController;
-  late final Map<int, DropdownOption<T>> _options;
+  late Map<int, DropdownOption<T>> _options;
   late final TextEditingController _searchController;
+  ScrollNotificationObserverState? _scrollNotificationObserverState;
   late final FocusNode _searchFocus;
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    if (_popupController.isShowing) {
+      _popupController.hide();
+    }
+  }
 
   @override
   void initState() {
@@ -48,14 +73,7 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
     _popupController = OverlayPortalController();
     _searchFocus = FocusNode();
     _searchController.addListener(onType);
-  }
-
-  @override
-  void didUpdateWidget(SearchableDropdown<T> oldWidget) {
-    _options = {
-      for (var option in widget.initialValues) option.value.hashCode: option
-    };
-    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -63,7 +81,35 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
     _searchController.removeListener(onType);
     _searchController.dispose();
     _searchFocus.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _scrollNotificationObserverState?.removeListener(onScrollNotification);
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _scrollNotificationObserverState =
+        ScrollNotificationObserver.maybeOf(context);
+    _scrollNotificationObserverState?.addListener(onScrollNotification);
+    super.didChangeDependencies();
+  }
+
+  void onScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification && mounted) {
+      if (_popupController.isShowing) {
+        _popupController.hide();
+      }
+    }
+  }
+
+  bool isPointerInsideMenu(BuildContext context, PointerDownEvent event) {
+    final (offset, width, popupHeight) = _getGlobalPosition(context);
+    final eventGlobalPosition = event.position;
+
+    return eventGlobalPosition.dx >= offset.dx &&
+        eventGlobalPosition.dx <= (offset.dx + width) &&
+        eventGlobalPosition.dy >= offset.dy &&
+        eventGlobalPosition.dy <= (offset.dy + popupHeight);
   }
 
   void onType() {
@@ -74,16 +120,13 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
 
   Widget _defaultHeaderBuilder(
     DropdownOption<T> option,
-    void Function(DropdownOption<T> option) onRemove,
+    void Function(DropdownOption<T> option) remove,
   ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        option.optionBuilder(option.value),
-        IconButton(
-            onPressed: () => onRemove(option),
-            icon: const Icon(Icons.cancel_outlined))
-      ],
+    return InputChip(
+      label: option.optionBuilder(option.value),
+      onDeleted: widget.drodownHeaderOptions.inputDecoration.enabled
+          ? () => remove(option)
+          : null,
     );
   }
 
@@ -119,9 +162,11 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
   List<Widget> _getOptions(String searchString) {
     return widget.options
         .where(
-          (option) => option.value.toString().toLowerCase().contains(
-                searchString,
-              ),
+          (option) =>
+              widget.searchFunction?.call(option, searchString) ??
+              option.value.toString().toLowerCase().contains(
+                    searchString,
+                  ),
         )
         .map((option) => DropdownMenuButton(
               isSelected: _options.containsKey(option.value.hashCode),
@@ -133,9 +178,17 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
                 _popupController.hide();
                 setState(() {});
               },
-              child: option.optionBuilder(option.value),
+              child: option.optionBuilder.call(option.value),
             ))
         .toList();
+  }
+
+  @override
+  void didUpdateWidget(covariant SearchableDropdown<T> oldWidget) {
+    _options = {
+      for (var option in widget.initialValues) option.value.hashCode: option
+    };
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -151,25 +204,39 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
               final options = _getOptions(textEditingValue.text);
 
               return DropdownBody(
-                  dropdownBodyInfo: DropdownBodyInfo(
-                    offset: offset,
-                    width: width,
-                    height: popupHeight,
-                    itemExtent: widget.itemExtent,
-                  ),
-                  options: options);
+                dropdownBodyInfo: DropdownBodyBox(
+                  offset: offset,
+                  width: width,
+                  height: popupHeight,
+                  itemExtent: widget.itemExtent,
+                ),
+                options: options,
+                parentFocus: _searchFocus,
+              );
             });
       },
-      child: DropdownHeader<T>(
-        focusNode: _searchFocus,
-        selectedOptions: _options.values
-            .map((option) =>
-                widget.headerItemBuilder?.call(option, onRemove) ??
-                _defaultHeaderBuilder(option, onRemove))
-            .toList(),
-        onTap: _popupController.toggle,
-        searchController: _searchController,
-      ),
+      child: TapRegion(
+          onTapOutside: (event) {
+            if (_popupController.isShowing &&
+                !isPointerInsideMenu(context, event)) {
+              _popupController.hide();
+            }
+          },
+          child: DropdownHeader(
+            inputDecoration: widget.drodownHeaderOptions.inputDecoration,
+            isSearchable: widget.drodownHeaderOptions.isSearchable,
+            runSpacing: widget.drodownHeaderOptions.runSpacing,
+            spacing: widget.drodownHeaderOptions.spacing,
+            searchFieldBuilder: widget.drodownHeaderOptions.searchFieldBuilder,
+            focusNode: _searchFocus,
+            selectedOptions: _options.values
+                .map((option) =>
+                    widget.headerItemBuilder?.call(option, onRemove) ??
+                    _defaultHeaderBuilder(option, onRemove))
+                .toList(),
+            onTap: _popupController.toggle,
+            searchController: _searchController,
+          )),
     );
   }
 }
