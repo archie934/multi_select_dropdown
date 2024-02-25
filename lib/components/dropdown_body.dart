@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:searchable_dropdown/models/dropdown_body_box.dart';
+import 'package:searchable_dropdown/models/dropdown_scroll_notification.dart';
 
-import '../models/dropdown_scroll_notification.dart';
+import 'dropdown_body_animation.dart';
 
-class DropdownBody extends StatefulWidget {
+class DropdownBody extends StatelessWidget {
   final DropdownBodyBox dropdownBodyBox;
   final FocusNode parentFocus;
   final List<Widget> options;
@@ -15,68 +16,51 @@ class DropdownBody extends StatefulWidget {
     required this.parentFocus,
   });
 
-  @override
-  State<DropdownBody> createState() => _DropdownBodyState();
-}
+  Widget defaultContainer({required Widget child}) {
+    if (dropdownBodyBox.containerBuilder != null) {
+      return dropdownBodyBox.containerBuilder!.call(
+        dropdownBodyBox: dropdownBodyBox,
+        bodyList: child,
+      );
+    }
 
-class _DropdownBodyState extends State<DropdownBody>
-    with TickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
-
-  @override
-  void initState() {
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    )..forward();
-
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.fastOutSlowIn,
+    return DrodownBodyAnimation(
+      child: Container(
+        width: dropdownBodyBox.width,
+        height: dropdownBodyBox.height,
+        color: Colors.white,
+        child: child,
+      ),
     );
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: widget.dropdownBodyBox.offset.dy,
-      left: widget.dropdownBodyBox.offset.dx,
-      child: ScaleTransition(
-        scale: _animation,
-        child: Container(
-          width: widget.dropdownBodyBox.width,
-          height: widget.dropdownBodyBox.height,
-          color: Colors.white,
-          child: FocusScope(
-            autofocus: true,
-            parentNode: widget.parentFocus,
-            child: NotificationListener(
-              onNotification: (notification) {
-                if (notification is ScrollNotification) {
-                  DropdownScrollNotification(
-                          metrics: notification.metrics,
-                          context: notification.context)
-                      .dispatch(context);
-                }
-                return true;
-              },
-              child: CustomScrollView(
-                primary: true,
-                slivers: [
-                  SliverFixedExtentList(
-                    itemExtent: widget.dropdownBodyBox.itemExtent,
-                    delegate: SliverChildListDelegate(widget.options),
-                  )
-                ],
-              ),
+      top: dropdownBodyBox.offset.dy,
+      left: dropdownBodyBox.offset.dx,
+      child: defaultContainer(
+        child: FocusScope(
+          autofocus: true,
+          parentNode: parentFocus,
+          child: NotificationListener(
+            onNotification: (notification) {
+              if (notification is ScrollNotification) {
+                DropdownScrollNotification(
+                        metrics: notification.metrics,
+                        context: notification.context)
+                    .dispatch(context);
+              }
+              return true;
+            },
+            child: CustomScrollView(
+              primary: true,
+              slivers: [
+                SliverFixedExtentList(
+                  itemExtent: dropdownBodyBox.itemExtent,
+                  delegate: SliverChildListDelegate(options),
+                )
+              ],
             ),
           ),
         ),

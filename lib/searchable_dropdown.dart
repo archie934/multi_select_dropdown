@@ -29,6 +29,10 @@ class SearchableDropdown<T> extends StatefulWidget {
   final void Function(List<DropdownOption<T>> selectedOption) onChanged;
   final bool Function(DropdownOption<T> option, String searhString)?
       searchFunction;
+  final Widget Function({
+    required DropdownBodyBox dropdownBodyBox,
+    required Widget bodyList,
+  })? menuContainerBuilder;
   final double itemExtent;
 
   final HeaderItemBuilder<T>? headerItemBuilder;
@@ -44,6 +48,7 @@ class SearchableDropdown<T> extends StatefulWidget {
     this.itemExtent = defaultItemExtent,
     this.headerItemBuilder,
     this.drodownHeaderOptions = defaultHeaderOptions,
+    this.menuContainerBuilder,
   }) : super(key: key);
 
   @override
@@ -230,6 +235,7 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
                   width: width,
                   height: popupHeight,
                   itemExtent: widget.itemExtent,
+                  containerBuilder: widget.menuContainerBuilder
                 ),
                 options: options,
                 parentFocus: _searchFocus,
