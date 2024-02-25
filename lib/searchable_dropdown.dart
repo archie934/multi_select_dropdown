@@ -22,7 +22,7 @@ const defaultItemExtent = 40.0;
 typedef HeaderItemBuilder<T> = Widget Function(
     DropdownOption<T> option, void Function(DropdownOption<T> option) remove);
 
-class SearchableDropdown<T> extends StatefulWidget {
+class MultiSelectDropdown<T> extends StatefulWidget {
   final List<DropdownOption<T>> options;
   final List<DropdownOption<T>> initialValues;
   final DrodownHeaderOptions drodownHeaderOptions;
@@ -38,7 +38,7 @@ class SearchableDropdown<T> extends StatefulWidget {
   final HeaderItemBuilder<T>? headerItemBuilder;
   final double? popupHeight;
 
-  const SearchableDropdown({
+  const MultiSelectDropdown({
     Key? key,
     required this.options,
     required this.initialValues,
@@ -52,10 +52,10 @@ class SearchableDropdown<T> extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => SearchableDropdownState();
+  State<StatefulWidget> createState() => MultiSelectDropdownState();
 }
 
-class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
+class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     with WidgetsBindingObserver {
   late final OverlayPortalController _popupController;
   late Map<int, DropdownOption<T>> _options;
@@ -210,7 +210,7 @@ class SearchableDropdownState<T> extends State<SearchableDropdown<T>>
   }
 
   @override
-  void didUpdateWidget(covariant SearchableDropdown<T> oldWidget) {
+  void didUpdateWidget(covariant MultiSelectDropdown<T> oldWidget) {
     _options = {
       for (var option in widget.initialValues) option.value.hashCode: option
     };

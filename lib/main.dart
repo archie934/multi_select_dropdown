@@ -20,8 +20,8 @@ class MainApp extends StatelessWidget {
               children: List.generate(
                   50,
                   (index) => Padding(
-                        padding: EdgeInsets.all(16),
-                        child: SearchableDropdown(
+                        padding: const EdgeInsets.all(16),
+                        child: MultiSelectDropdown(
                           options: List.generate(
                               50,
                               (index) => DropdownOption(
@@ -51,7 +51,9 @@ class MainApp extends StatelessWidget {
                           ],
                           onChanged:
                               (List<DropdownOption<String>> selectedOption) {
-                            print(selectedOption.toString());
+                            debugPrint(
+                              selectedOption.toString(),
+                            );
                           },
                         ),
                       )),
