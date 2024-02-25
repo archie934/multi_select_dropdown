@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:searchable_dropdown/models/dropdown_option.dart';
-import 'package:searchable_dropdown/searchable_dropdown.dart';
+import 'package:searchable_dropdown/multi_select_dropdown.dart';
 
 void main() {
   runApp(const MainApp());

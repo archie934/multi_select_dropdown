@@ -34,6 +34,7 @@ class MultiSelectDropdown<T> extends StatefulWidget {
     required Widget bodyList,
   })? menuContainerBuilder;
   final double itemExtent;
+  final int? maxItemsBeforeScroll;
 
   final HeaderItemBuilder<T>? headerItemBuilder;
   final double? popupHeight;
@@ -49,6 +50,7 @@ class MultiSelectDropdown<T> extends StatefulWidget {
     this.headerItemBuilder,
     this.drodownHeaderOptions = defaultHeaderOptions,
     this.menuContainerBuilder,
+    this.maxItemsBeforeScroll = 5,
   }) : super(key: key);
 
   @override
@@ -152,9 +154,12 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     final Offset globalPosition = renderBox.localToGlobal(Offset.zero);
     final int items = widget.options.length;
     double topPosition = globalPosition.dy + renderBox.size.height;
+    final maxItems = widget.maxItemsBeforeScroll!;
 
     final double popupHeight = widget.popupHeight ??
-        (items > 5 ? (5 * widget.itemExtent) : items * widget.itemExtent);
+        (items > maxItems
+            ? (maxItems * widget.itemExtent)
+            : items * widget.itemExtent);
 
     final isPopupMenuAboveHeader =
         topPosition + popupHeight >= MediaQuery.of(context).size.height;
@@ -231,12 +236,11 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
 
               return DropdownBody(
                 dropdownBodyBox: DropdownBodyBox(
-                  offset: offset,
-                  width: width,
-                  height: popupHeight,
-                  itemExtent: widget.itemExtent,
-                  containerBuilder: widget.menuContainerBuilder
-                ),
+                    offset: offset,
+                    width: width,
+                    height: popupHeight,
+                    itemExtent: widget.itemExtent,
+                    containerBuilder: widget.menuContainerBuilder),
                 options: options,
                 parentFocus: _searchFocus,
               );
