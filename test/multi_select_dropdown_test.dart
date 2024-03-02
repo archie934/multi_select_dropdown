@@ -14,6 +14,7 @@ void main() {
       final dropdownWidget = TestWrapper(
         child: MultiSelectDropdown(
             options: dropdownOptions,
+            dismissOnAdd: true,
             initialValues: const [],
             onChanged: (_) {}),
       );

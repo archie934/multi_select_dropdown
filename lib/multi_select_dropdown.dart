@@ -3,6 +3,7 @@ library multi_select_dropdown;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:multi_select_dropdown/models/box_info.dart';
 
 import 'components/dropdown_body.dart';
 import 'components/dropdown_header.dart';
@@ -11,7 +12,6 @@ import 'models/dropdown_body_box.dart';
 import 'models/dropdown_header_options.dart';
 import 'models/dropdown_menu_button_options.dart';
 import 'models/dropdown_option.dart';
-import 'models/dropdown_scroll_notification.dart';
 
 const defaultHeaderOptions = DropdownHeaderOptions(
   isSearchable: true,
@@ -40,24 +40,29 @@ class MultiSelectDropdown<T> extends StatefulWidget {
   })? menuContainerBuilder;
   final double itemExtent;
   final int? maxItemsBeforeScroll;
+  final Widget? endAdornment;
+  final bool dismissOnAdd;
 
   final HeaderItemBuilder<T>? headerItemBuilder;
   final double? popupHeight;
   final Duration debounceDuration;
 
-  const MultiSelectDropdown(
-      {super.key,
-      required this.options,
-      required this.initialValues,
-      required this.onChanged,
-      this.searchFunction,
-      this.popupHeight,
-      this.itemExtent = defaultItemExtent,
-      this.headerItemBuilder,
-      this.drodownHeaderOptions = defaultHeaderOptions,
-      this.menuContainerBuilder,
-      this.maxItemsBeforeScroll = defaultMaxItemsBeforeScroll,
-      this.debounceDuration = defaultDebounceDuration});
+  const MultiSelectDropdown({
+    super.key,
+    required this.options,
+    required this.initialValues,
+    required this.onChanged,
+    this.searchFunction,
+    this.popupHeight,
+    this.headerItemBuilder,
+    this.endAdornment,
+    this.dismissOnAdd = false,
+    this.itemExtent = defaultItemExtent,
+    this.drodownHeaderOptions = defaultHeaderOptions,
+    this.menuContainerBuilder,
+    this.maxItemsBeforeScroll = defaultMaxItemsBeforeScroll,
+    this.debounceDuration = defaultDebounceDuration,
+  });
 
   @override
   State<StatefulWidget> createState() => MultiSelectDropdownState();
@@ -68,9 +73,10 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
   late final OverlayPortalController _popupController;
   late Map<int, DropdownOption<T>> _options;
   late final TextEditingController _searchController;
-  ScrollNotificationObserverState? _scrollNotificationObserverState;
   late final FocusNode _searchFocus;
   var _lastOptions = <Widget>[];
+  late final LayerLink _layerLink;
+  late BoxInfo _boxInfo;
   Timer? _debounceTimer;
 
   @override
@@ -94,6 +100,7 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     _lastOptions = _mapOptions(widget.options);
     _searchController.addListener(_debounceSetOptions);
     WidgetsBinding.instance.addObserver(this);
+    _layerLink = LayerLink();
   }
 
   @override
@@ -103,17 +110,8 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     _searchController.dispose();
     _searchFocus.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    _scrollNotificationObserverState?.removeListener(onScrollNotification);
     _debounceTimer?.cancel();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    _scrollNotificationObserverState =
-        ScrollNotificationObserver.maybeOf(context);
-    _scrollNotificationObserverState?.addListener(onScrollNotification);
-    super.didChangeDependencies();
   }
 
   @override
@@ -124,26 +122,11 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     super.didUpdateWidget(oldWidget);
   }
 
-  void onScrollNotification(ScrollNotification notification) {
-    if (notification is DropdownScrollNotification) {
-      return;
-    }
-
-    if (notification is ScrollStartNotification && mounted) {
-      if (_popupController.isShowing) {
-        _searchController.clear();
-        _popupController.hide();
-      }
-    }
-  }
-
   bool isPointerInsideMenu(BuildContext context, Offset globalPoint) {
-    final (offset, width, popupHeight) = _getGlobalPosition(context);
-
-    return globalPoint.dx >= offset.dx &&
-        globalPoint.dx <= (offset.dx + width) &&
-        globalPoint.dy >= offset.dy &&
-        globalPoint.dy <= (offset.dy + popupHeight);
+    return globalPoint.dx >= _boxInfo.offset.dx &&
+        globalPoint.dx <= (_boxInfo.offset.dx + _boxInfo.width) &&
+        globalPoint.dy >= _boxInfo.offset.dy &&
+        globalPoint.dy <= (_boxInfo.offset.dy + _boxInfo.height);
   }
 
   void onSearch() {
@@ -171,17 +154,23 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
   }
 
   void onAdd(DropdownOption<T> option) {
+    if (_options.containsKey(option.value.hashCode)) {
+      return;
+    }
+
     _options.putIfAbsent(option.value.hashCode, () {
       _searchController.clear();
       return option;
     });
-    _popupController.hide();
+
+    if (widget.dismissOnAdd) {
+      _popupController.hide();
+    }
     widget.onChanged(_options.values.toList());
     _debounceSetOptions();
   }
 
-  (Offset offset, double width, double popupHeight) _getGlobalPosition(
-      BuildContext context) {
+  BoxInfo _getGlobalPosition(BuildContext context) {
     final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset globalPosition = renderBox.localToGlobal(Offset.zero);
     final int items = widget.options.length;
@@ -200,11 +189,10 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
       topPosition = globalPosition.dy - popupHeight;
     }
 
-    return (
-      Offset(globalPosition.dx, topPosition),
-      renderBox.size.width,
-      popupHeight
-    );
+    return BoxInfo(
+        offset: Offset(globalPosition.dx, topPosition),
+        width: renderBox.size.width,
+        height: popupHeight);
   }
 
   String formatOption(DropdownOption<T> option) =>
@@ -244,7 +232,7 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     return _mapOptions(filteredOptions);
   }
 
-  void _debounceSetOptions() async {
+  void _debounceSetOptions() {
     _debounceTimer?.cancel();
 
     _debounceTimer = Timer(widget.debounceDuration, () {
@@ -259,17 +247,25 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     return OverlayPortal(
       controller: _popupController,
       overlayChildBuilder: (_) {
-        final (offset, width, popupHeight) = _getGlobalPosition(context);
+        _boxInfo = _getGlobalPosition(context);
 
-        return DropdownBody(
-          dropdownBodyBox: DropdownBodyBox(
-              offset: offset,
-              width: width,
-              height: popupHeight,
-              itemExtent: widget.itemExtent,
-              containerBuilder: widget.menuContainerBuilder),
-          options: _lastOptions,
-          parentFocus: _searchFocus,
+        return Positioned(
+          left: _boxInfo.offset.dx,
+          top: _boxInfo.offset.dy,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.bottomLeft,
+            child: DropdownBody(
+              dropdownBodyBox: DropdownBodyBox(
+                boxInfo: _boxInfo,
+                itemExtent: widget.itemExtent,
+                containerBuilder: widget.menuContainerBuilder,
+              ),
+              options: _lastOptions,
+              parentFocus: _searchFocus,
+            ),
+          ),
         );
       },
       child: TapRegion(
@@ -280,20 +276,25 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
               _popupController.hide();
             }
           },
-          child: DropdownHeader(
-            inputDecoration: widget.drodownHeaderOptions.inputDecoration,
-            isSearchable: widget.drodownHeaderOptions.isSearchable,
-            runSpacing: widget.drodownHeaderOptions.runSpacing,
-            spacing: widget.drodownHeaderOptions.spacing,
-            searchFieldBuilder: widget.drodownHeaderOptions.searchFieldBuilder,
-            focusNode: _searchFocus,
-            selectedOptions: _options.values
-                .map((option) =>
-                    widget.headerItemBuilder?.call(option, onRemove) ??
-                    _defaultHeaderBuilder(option, onRemove))
-                .toList(),
-            onTap: _popupController.toggle,
-            searchController: _searchController,
+          child: CompositedTransformTarget(
+            link: _layerLink,
+            child: DropdownHeader(
+              inputDecoration: widget.drodownHeaderOptions.inputDecoration,
+              isSearchable: widget.drodownHeaderOptions.isSearchable,
+              runSpacing: widget.drodownHeaderOptions.runSpacing,
+              spacing: widget.drodownHeaderOptions.spacing,
+              searchFieldBuilder:
+                  widget.drodownHeaderOptions.searchFieldBuilder,
+              focusNode: _searchFocus,
+              endAdornment: widget.endAdornment,
+              selectedOptions: _options.values
+                  .map((option) =>
+                      widget.headerItemBuilder?.call(option, onRemove) ??
+                      _defaultHeaderBuilder(option, onRemove))
+                  .toList(),
+              onTap: _popupController.toggle,
+              searchController: _searchController,
+            ),
           )),
     );
   }

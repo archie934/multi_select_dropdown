@@ -9,6 +9,7 @@ class DropdownHeader extends StatelessWidget {
   final double runSpacing;
   final bool isSearchable;
   final InputDecoration inputDecoration;
+  final Widget? endAdornment;
   final Widget Function(TextEditingController controller, FocusNode focusNode)?
       searchFieldBuilder;
 
@@ -23,7 +24,23 @@ class DropdownHeader extends StatelessWidget {
     required this.runSpacing,
     required this.isSearchable,
     this.searchFieldBuilder,
+    this.endAdornment,
   });
+
+  Widget addEndAdornment(Widget child) {
+    if (endAdornment == null) {
+      return child;
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(
+          child: child,
+        ),
+        endAdornment!
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,28 +55,30 @@ class DropdownHeader extends StatelessWidget {
           : null,
       child: InputDecorator(
         decoration: inputDecoration,
-        child: Wrap(
-          direction: Axis.horizontal,
-          spacing: spacing,
-          runSpacing: runSpacing,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: !isSearchable ? selectedOptions : selectedOptions
-            ..add(
-              searchFieldBuilder?.call(searchController, focusNode) ??
-                  TextField(
-                    controller: searchController,
-                    focusNode: focusNode,
-                    decoration: InputDecoration(
-                        constraints:
-                            const BoxConstraints.tightForFinite(width: 200),
-                        contentPadding: EdgeInsets.zero.copyWith(left: 16),
-                        suffix: null,
-                        prefix: null,
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        isDense: true),
-                  ),
-            ),
+        child: addEndAdornment(
+          Wrap(
+            direction: Axis.horizontal,
+            spacing: spacing,
+            runSpacing: runSpacing,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: !isSearchable ? selectedOptions : selectedOptions
+              ..add(
+                searchFieldBuilder?.call(searchController, focusNode) ??
+                    TextField(
+                      controller: searchController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                          constraints:
+                              const BoxConstraints.tightForFinite(width: 200),
+                          contentPadding: EdgeInsets.zero.copyWith(left: 16),
+                          suffix: null,
+                          prefix: null,
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          isDense: true),
+                    ),
+              ),
+          ),
         ),
       ),
     );

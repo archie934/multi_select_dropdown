@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/dropdown_body_box.dart';
-import '../models/dropdown_scroll_notification.dart';
 import 'dropdown_body_animation.dart';
 
 class DropdownBody extends StatelessWidget {
@@ -26,8 +25,8 @@ class DropdownBody extends StatelessWidget {
 
     return DrodownBodyAnimation(
       child: Container(
-        width: dropdownBodyBox.width,
-        height: dropdownBodyBox.height,
+        width: dropdownBodyBox.boxInfo.width,
+        height: dropdownBodyBox.boxInfo.height,
         color: Colors.white,
         child: child,
       ),
@@ -36,33 +35,18 @@ class DropdownBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: dropdownBodyBox.offset.dy,
-      left: dropdownBodyBox.offset.dx,
-      child: defaultContainer(
-        child: FocusScope(
-          autofocus: true,
-          parentNode: parentFocus,
-          child: NotificationListener(
-            onNotification: (notification) {
-              if (notification is ScrollNotification) {
-                DropdownScrollNotification(
-                        metrics: notification.metrics,
-                        context: notification.context)
-                    .dispatch(context);
-              }
-              return true;
-            },
-            child: CustomScrollView(
-              primary: true,
-              slivers: [
-                SliverFixedExtentList(
-                  itemExtent: dropdownBodyBox.itemExtent,
-                  delegate: SliverChildListDelegate(options),
-                )
-              ],
-            ),
-          ),
+    return defaultContainer(
+      child: FocusScope(
+        autofocus: true,
+        parentNode: parentFocus,
+        child: CustomScrollView(
+          primary: true,
+          slivers: [
+            SliverFixedExtentList(
+              itemExtent: dropdownBodyBox.itemExtent,
+              delegate: SliverChildListDelegate(options),
+            )
+          ],
         ),
       ),
     );
