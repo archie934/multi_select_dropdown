@@ -1,8 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+/// This class is used as custom [ScrollNotification] to avoid dropdown menu dismissal when scrolling inside the menu
 class DropdownScrollNotification extends ScrollNotification {
   DropdownScrollNotification({
-    required ScrollMetrics metrics,
-    required BuildContext? context,
-  }) : super(metrics: metrics, context: context);
+    required super.metrics,
+    required super.context,
+  });
 }

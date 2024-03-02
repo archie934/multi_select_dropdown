@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:searchable_dropdown/models/dropdown_body_box.dart';
-import 'package:searchable_dropdown/models/dropdown_scroll_notification.dart';
 
+import '../models/dropdown_body_box.dart';
+import '../models/dropdown_scroll_notification.dart';
 import 'dropdown_body_animation.dart';
 
 class DropdownBody extends StatelessWidget {

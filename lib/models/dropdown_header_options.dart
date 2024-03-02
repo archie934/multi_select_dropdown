@@ -1,29 +1,39 @@
 import 'package:flutter/material.dart';
 
 @immutable
-class DrodownHeaderOptions {
+class DropdownHeaderOptions {
+  /// [Wrap] spacing property of the header
   final double spacing;
+
+  /// [Wrap] runSpacing property of the header
   final double runSpacing;
+
+  /// If false header [TextField] is not rendered
   final bool isSearchable;
+
+  /// [InputDecoration] of the header
   final InputDecoration inputDecoration;
+
+  /// Function that builds the [TextField] for the header
+  /// If null a default [TextField] is provided
   final Widget Function(TextEditingController controller, FocusNode focusNode)?
       searchFieldBuilder;
 
-  const DrodownHeaderOptions({
+  const DropdownHeaderOptions({
     required this.spacing,
     required this.runSpacing,
-    required this.isSearchable,
     required this.inputDecoration,
+    this.isSearchable = true,
     this.searchFieldBuilder,
   });
 
-  DrodownHeaderOptions copyWith({
+  DropdownHeaderOptions copyWith({
     double? spacing,
     double? runSpacing,
     bool? isSearchable,
     InputDecoration? inputDecoration,
   }) {
-    return DrodownHeaderOptions(
+    return DropdownHeaderOptions(
       spacing: spacing ?? this.spacing,
       runSpacing: runSpacing ?? this.runSpacing,
       isSearchable: isSearchable ?? this.isSearchable,

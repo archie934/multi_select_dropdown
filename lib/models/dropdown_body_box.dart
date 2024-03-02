@@ -3,10 +3,18 @@ import 'package:flutter/material.dart';
 
 @immutable
 class DropdownBodyBox {
+  /// The point is used by [Positioned] to position the dropdown menu
   final Offset offset;
+
+  /// Width of the dropdown menu computed based on the [RenderBox] of header
   final double width;
+
+  /// Height of the dropdown menu computed based on the [RenderBox] of header
   final double height;
+
+  /// Used by [SliverFixedExtentList] in the dropdown menu
   final double itemExtent;
+
   final Widget Function({
     required DropdownBodyBox dropdownBodyBox,
     required Widget bodyList,

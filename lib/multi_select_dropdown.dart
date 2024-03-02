@@ -1,16 +1,19 @@
+library multi_select_dropdown;
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:searchable_dropdown/components/dropdown_body.dart';
 
-import 'package:searchable_dropdown/components/dropdown_header.dart';
-import 'package:searchable_dropdown/models/dropdown_body_box.dart';
-import 'package:searchable_dropdown/models/dropdown_header_options.dart';
-import 'package:searchable_dropdown/models/dropdown_menu_button_options.dart';
-import 'package:searchable_dropdown/models/dropdown_option.dart';
-import 'package:searchable_dropdown/models/dropdown_scroll_notification.dart';
-
+import 'components/dropdown_body.dart';
+import 'components/dropdown_header.dart';
 import 'components/dropdown_menu_button.dart';
+import 'models/dropdown_body_box.dart';
+import 'models/dropdown_header_options.dart';
+import 'models/dropdown_menu_button_options.dart';
+import 'models/dropdown_option.dart';
+import 'models/dropdown_scroll_notification.dart';
 
-const defaultHeaderOptions = DrodownHeaderOptions(
+const defaultHeaderOptions = DropdownHeaderOptions(
   isSearchable: true,
   runSpacing: 8.0,
   spacing: 8.0,
@@ -18,6 +21,8 @@ const defaultHeaderOptions = DrodownHeaderOptions(
 );
 
 const defaultItemExtent = 40.0;
+const defaultDebounceDuration = Duration(milliseconds: 200);
+const defaultMaxItemsBeforeScroll = 5;
 
 typedef HeaderItemBuilder<T> = Widget Function(
     DropdownOption<T> option, void Function(DropdownOption<T> option) remove);
@@ -25,8 +30,8 @@ typedef HeaderItemBuilder<T> = Widget Function(
 class MultiSelectDropdown<T> extends StatefulWidget {
   final List<DropdownOption<T>> options;
   final List<DropdownOption<T>> initialValues;
-  final DrodownHeaderOptions drodownHeaderOptions;
-  final void Function(List<DropdownOption<T>> selectedOption) onChanged;
+  final DropdownHeaderOptions drodownHeaderOptions;
+  final void Function(List<DropdownOption<dynamic>> selectedOption) onChanged;
   final bool Function(DropdownOption<T> option, String searhString)?
       searchFunction;
   final Widget Function({
@@ -38,20 +43,21 @@ class MultiSelectDropdown<T> extends StatefulWidget {
 
   final HeaderItemBuilder<T>? headerItemBuilder;
   final double? popupHeight;
+  final Duration debounceDuration;
 
-  const MultiSelectDropdown({
-    Key? key,
-    required this.options,
-    required this.initialValues,
-    required this.onChanged,
-    this.searchFunction,
-    this.popupHeight,
-    this.itemExtent = defaultItemExtent,
-    this.headerItemBuilder,
-    this.drodownHeaderOptions = defaultHeaderOptions,
-    this.menuContainerBuilder,
-    this.maxItemsBeforeScroll = 5,
-  }) : super(key: key);
+  const MultiSelectDropdown(
+      {super.key,
+      required this.options,
+      required this.initialValues,
+      required this.onChanged,
+      this.searchFunction,
+      this.popupHeight,
+      this.itemExtent = defaultItemExtent,
+      this.headerItemBuilder,
+      this.drodownHeaderOptions = defaultHeaderOptions,
+      this.menuContainerBuilder,
+      this.maxItemsBeforeScroll = defaultMaxItemsBeforeScroll,
+      this.debounceDuration = defaultDebounceDuration});
 
   @override
   State<StatefulWidget> createState() => MultiSelectDropdownState();
@@ -64,6 +70,8 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
   late final TextEditingController _searchController;
   ScrollNotificationObserverState? _scrollNotificationObserverState;
   late final FocusNode _searchFocus;
+  var _lastOptions = <Widget>[];
+  Timer? _debounceTimer;
 
   @override
   void didChangeMetrics() {
@@ -82,17 +90,21 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     };
     _popupController = OverlayPortalController();
     _searchFocus = FocusNode();
-    _searchController.addListener(onType);
+    _searchController.addListener(onSearch);
+    _lastOptions = _mapOptions(widget.options);
+    _searchController.addListener(_debounceSetOptions);
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(onType);
+    _searchController.removeListener(onSearch);
+    _searchController.removeListener(_debounceSetOptions);
     _searchController.dispose();
     _searchFocus.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _scrollNotificationObserverState?.removeListener(onScrollNotification);
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -104,6 +116,14 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     super.didChangeDependencies();
   }
 
+  @override
+  void didUpdateWidget(covariant MultiSelectDropdown<T> oldWidget) {
+    _options = {
+      for (var option in widget.initialValues) option.value.hashCode: option
+    };
+    super.didUpdateWidget(oldWidget);
+  }
+
   void onScrollNotification(ScrollNotification notification) {
     if (notification is DropdownScrollNotification) {
       return;
@@ -111,6 +131,7 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
 
     if (notification is ScrollStartNotification && mounted) {
       if (_popupController.isShowing) {
+        _searchController.clear();
         _popupController.hide();
       }
     }
@@ -125,7 +146,7 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
         globalPoint.dy <= (offset.dy + popupHeight);
   }
 
-  void onType() {
+  void onSearch() {
     if (!_popupController.isShowing) {
       _popupController.show();
     }
@@ -145,7 +166,18 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
 
   void onRemove(DropdownOption<T> option) {
     this._options.remove(option.value.hashCode);
-    setState(() {});
+    widget.onChanged(_options.values.toList());
+    _debounceSetOptions();
+  }
+
+  void onAdd(DropdownOption<T> option) {
+    _options.putIfAbsent(option.value.hashCode, () {
+      _searchController.clear();
+      return option;
+    });
+    _popupController.hide();
+    widget.onChanged(_options.values.toList());
+    _debounceSetOptions();
   }
 
   (Offset offset, double width, double popupHeight) _getGlobalPosition(
@@ -175,51 +207,51 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
     );
   }
 
-  List<Widget> _getOptions(String searchString) {
-    return widget.options
-        .where(
-          (option) =>
-              widget.searchFunction?.call(option, searchString) ??
-              option.value.toString().toLowerCase().contains(
-                    searchString,
-                  ),
-        )
+  String formatOption(DropdownOption<T> option) =>
+      option.value.toString().replaceAll(' ', '').toLowerCase();
+
+  List<Widget> _mapOptions(Iterable<DropdownOption<T>> options) {
+    return options
         .map((option) =>
             option.menuItemBuilder?.call(
               DropdownMenuButtonOptions(
                   isSelected: _options.containsKey(option.value.hashCode),
                   onTap: () {
-                    {
-                      _options.putIfAbsent(option.value.hashCode, () {
-                        _searchController.clear();
-                        return option;
-                      });
-                      _popupController.hide();
-                      setState(() {});
-                    }
+                    onAdd(option);
                   }),
             ) ??
             DropdownMenuButton(
               isSelected: _options.containsKey(option.value.hashCode),
               onTap: () {
-                _options.putIfAbsent(option.value.hashCode, () {
-                  _searchController.clear();
-                  return option;
-                });
-                _popupController.hide();
-                setState(() {});
+                onAdd(option);
               },
               child: option.labelBuilder.call(option.value),
             ))
         .toList();
   }
 
-  @override
-  void didUpdateWidget(covariant MultiSelectDropdown<T> oldWidget) {
-    _options = {
-      for (var option in widget.initialValues) option.value.hashCode: option
-    };
-    super.didUpdateWidget(oldWidget);
+  List<Widget> _getOptions(String searchString) {
+    final formattedSearch = searchString.replaceAll(' ', '').toLowerCase();
+    final filteredOptions = widget.options.where(
+      (option) {
+        return widget.searchFunction?.call(option, searchString) ??
+            formatOption(option).contains(
+              formattedSearch,
+            );
+      },
+    );
+
+    return _mapOptions(filteredOptions);
+  }
+
+  void _debounceSetOptions() async {
+    _debounceTimer?.cancel();
+
+    _debounceTimer = Timer(widget.debounceDuration, () {
+      setState(() {
+        _lastOptions = _getOptions(_searchController.text);
+      });
+    });
   }
 
   @override
@@ -229,27 +261,22 @@ class MultiSelectDropdownState<T> extends State<MultiSelectDropdown<T>>
       overlayChildBuilder: (_) {
         final (offset, width, popupHeight) = _getGlobalPosition(context);
 
-        return ValueListenableBuilder(
-            valueListenable: _searchController,
-            builder: (_, textEditingValue, ___) {
-              final options = _getOptions(textEditingValue.text);
-
-              return DropdownBody(
-                dropdownBodyBox: DropdownBodyBox(
-                    offset: offset,
-                    width: width,
-                    height: popupHeight,
-                    itemExtent: widget.itemExtent,
-                    containerBuilder: widget.menuContainerBuilder),
-                options: options,
-                parentFocus: _searchFocus,
-              );
-            });
+        return DropdownBody(
+          dropdownBodyBox: DropdownBodyBox(
+              offset: offset,
+              width: width,
+              height: popupHeight,
+              itemExtent: widget.itemExtent,
+              containerBuilder: widget.menuContainerBuilder),
+          options: _lastOptions,
+          parentFocus: _searchFocus,
+        );
       },
       child: TapRegion(
           onTapOutside: (event) {
             if (_popupController.isShowing &&
                 !isPointerInsideMenu(context, event.position)) {
+              _searchController.clear();
               _popupController.hide();
             }
           },

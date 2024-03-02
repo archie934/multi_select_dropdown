@@ -1,16 +1,19 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/widgets.dart';
 
-import 'package:searchable_dropdown/models/dropdown_menu_button_options.dart';
+import 'dropdown_menu_button_options.dart';
 
 typedef OptionBuilder<T> = Widget Function(T value);
 
 @immutable
 class DropdownOption<T> {
-  //Option shown in the header
+  /// Function that builds the option [Widget] shown in the header
   final OptionBuilder<dynamic> labelBuilder;
-  //Option shown in the dropdown menu
+
+  /// Function that builds the option [Widget] shown in the menu
   final OptionBuilder<DropdownMenuButtonOptions>? menuItemBuilder;
+
+  /// Value of type [T] of this option.
+  /// It's hash code is used by the internal map for selected options
   final T value;
 
   const DropdownOption({

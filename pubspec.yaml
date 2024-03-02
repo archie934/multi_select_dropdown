@@ -1,10 +1,11 @@
-name: searchable_dropdown
-description: A new Flutter project.
-publish_to: 'none'
-version: 0.1.0
+name: multi_select_dropdown
+description: "A widget for selecting multiple options from a dropdown list."
+version: 0.0.1
+homepage:
 
 environment:
-  sdk: '>=3.1.5 <4.0.0'
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: ">=1.17.0"
 
 dependencies:
   flutter:
@@ -13,7 +14,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.0
 
 flutter:
-  uses-material-design: true
+

@@ -19,10 +19,10 @@ class DropdownHeader extends StatelessWidget {
     required this.searchController,
     required this.focusNode,
     required this.inputDecoration,
-    this.spacing = 8.0,
-    this.runSpacing = 8.0,
+    required this.spacing,
+    required this.runSpacing,
+    required this.isSearchable,
     this.searchFieldBuilder,
-    this.isSearchable = true,
   });
 
   @override
