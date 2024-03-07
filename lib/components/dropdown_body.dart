@@ -36,8 +36,7 @@ class DropdownBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return defaultContainer(
-      child: FocusScope(
-        autofocus: true,
+      child: Focus(
         parentNode: parentFocus,
         child: CustomScrollView(
           primary: true,

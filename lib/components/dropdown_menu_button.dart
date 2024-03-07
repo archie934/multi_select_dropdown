@@ -16,8 +16,8 @@ class DropdownMenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      
       hoverColor: Colors.transparent,
+      focusColor: Colors.red,
       child: Container(
         color: isSelected
             ? Theme.of(context).primaryColor.withOpacity(.2)

@@ -45,6 +45,7 @@ class MultiSelectDropdown<T> extends StatefulWidget {
 
   final HeaderItemBuilder<T>? headerItemBuilder;
   final double? popupHeight;
+
   final Duration debounceDuration;
 
   const MultiSelectDropdown({
