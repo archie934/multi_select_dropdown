@@ -1,3 +1,3 @@
 ## 0.0.1
 
-* TODO: Describe initial release.
+* A widget for selecting multiple options from a dropdown list.
