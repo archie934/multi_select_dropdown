@@ -1,3 +1,6 @@
+## 0.0.3
+* Added missing description of parameters
+
 ## 0.0.2
 * Missing platforms information in pub dev
 

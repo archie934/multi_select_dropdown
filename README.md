@@ -42,7 +42,21 @@ MultiSelectDropdown(
 ```
 
 ## Some of the options are listed below:
-* List<DropdownOption<T>> options: the options of the dropdown menu
-* final List<DropdownOption<T>> initialValues: intial list of selected options
+* List<DropdownOption<T>> options: the options of the dropdown menu;
+* final List<DropdownOption<T>> initialValues: intial list of selected options;
 * final DropdownHeaderOptions option for customizing the header;
-* void Function(List<DropdownOption<T>> selectedOption) onChanged: 
+* void Function(List<DropdownOption<T>> selectedOption) onChanged: Callback that triggers on items are added or removed;
+* final bool Function(DropdownOption<T> option, String searhString)?
+      searchFunction: Filter function applied when searching for an option;
+* final Widget Function({
+    required DropdownBodyBox dropdownBodyBox,
+    required Widget bodyList,
+  })? menuContainerBuilder: Customize dropdown menu container;
+* final double itemExtent: Option item extent;
+* final int? maxItemsBeforeScroll: Number of visible items in the menu view port;
+* final Widget? endAdornment: Widget added at the end of the dropdown;
+* final bool dismissOnAdd: If true menu will close after selection;
+
+* final HeaderItemBuilder<T>? headerItemBuilder: Builder used by the header widget to build selected options;
+* final double? popupHeight: Menu height;
+* final Duration debounceDuration: Search items debounce;
