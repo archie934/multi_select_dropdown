@@ -1,7 +1,7 @@
 name: multi_select_dropdown
-description: "A widget for selecting multiple options from a dropdown list."
+description: A widget for selecting multiple options from a dropdown list.
 version: 0.0.1
-homepage:
+homepage: https://github.com/archie934/multi_select_dropdown
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
