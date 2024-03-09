@@ -1,7 +1,7 @@
 
 A widget for selecting multiple options from a dropdown list.
 
-“![](screenrecords/basic-usage.gif)”
+“![](https://github.com/archie934/multi_select_dropdown/tree/main/screenrecords/basic-usage.gif)”
 
 <?code-excerpt "lib/basic.dart (basic-example)"?>
 ```dart
