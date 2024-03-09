@@ -1,9 +1,9 @@
+import 'package:dropdown_widgets/components/dropdown_body.dart';
+import 'package:dropdown_widgets/components/dropdown_header.dart';
+import 'package:dropdown_widgets/components/dropdown_menu_button.dart';
+import 'package:dropdown_widgets/multi_select_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:multi_select_dropdown/components/dropdown_body.dart';
-import 'package:multi_select_dropdown/components/dropdown_header.dart';
-import 'package:multi_select_dropdown/components/dropdown_menu_button.dart';
-import 'package:multi_select_dropdown/multi_select_dropdown.dart';
 
 import 'mocks/dropdown_options.dart';
 import 'test_wrapper.dart';

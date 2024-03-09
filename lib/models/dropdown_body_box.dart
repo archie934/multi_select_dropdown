@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:multi_select_dropdown/models/box_info.dart';
+import 'box_info.dart';
 
 @immutable
 class DropdownBodyBox {

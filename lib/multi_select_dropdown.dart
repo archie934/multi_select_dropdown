@@ -3,11 +3,11 @@ library multi_select_dropdown;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:multi_select_dropdown/models/box_info.dart';
 
 import 'components/dropdown_body.dart';
 import 'components/dropdown_header.dart';
 import 'components/dropdown_menu_button.dart';
+import 'models/box_info.dart';
 import 'models/dropdown_body_box.dart';
 import 'models/dropdown_header_options.dart';
 import 'models/dropdown_menu_button_options.dart';

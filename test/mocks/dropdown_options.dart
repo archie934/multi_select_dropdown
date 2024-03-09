@@ -1,5 +1,5 @@
+import 'package:dropdown_widgets/models/dropdown_option.dart';
 import 'package:flutter/material.dart';
-import 'package:multi_select_dropdown/models/dropdown_option.dart';
 
 final dropdownOptions = List.generate(
     5,
